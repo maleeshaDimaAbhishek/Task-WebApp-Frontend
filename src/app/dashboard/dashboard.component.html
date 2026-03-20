@@ -1,0 +1,35 @@
+<section class="dashboard">
+  <header class="hero">
+    <p class="eyebrow">Workspace Overview</p>
+    <h2>Dashboard</h2>
+    <p class="subtitle">Track work, prioritize tasks, and keep daily progress visible.</p>
+  </header>
+
+  <div class="stat-grid" *ngIf="isLoggedIn$ | async; else guestView">
+    <article class="stat-card">
+      <h3>Due Today</h3>
+      <p class="value">4</p>
+      <p class="hint">Items requiring attention before end of day.</p>
+    </article>
+
+    <article class="stat-card">
+      <h3>In Progress</h3>
+      <p class="value">7</p>
+      <p class="hint">Tasks currently active across projects.</p>
+    </article>
+
+    <article class="stat-card">
+      <h3>Completed</h3>
+      <p class="value">26</p>
+      <p class="hint">Finished this week and ready for review.</p>
+    </article>
+  </div>
+
+  <ng-template #guestView>
+    <article class="guest-card">
+      <h3>Welcome</h3>
+      <p>Please sign in to view your dashboard and tasks.</p>
+      <a routerLink="/login">Go to Sign in</a>
+    </article>
+  </ng-template>
+</section>

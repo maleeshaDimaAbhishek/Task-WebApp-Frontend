@@ -1,0 +1,16 @@
+<nav class="top-nav">
+  <span class="brand">Task Manager</span>
+
+  <div class="nav-actions">
+    <ng-container *ngIf="isLoggedIn$ | async">
+      <a routerLink="/tasks" routerLinkActive="active-link">My Tasks</a>
+      <a routerLink="/dashboard" routerLinkActive="active-link">Dashboard</a>
+      <button class="sign-out" (click)="logout()">Sign out</button>
+    </ng-container>
+
+    <ng-container *ngIf="!(isLoggedIn$ | async)">
+      <a routerLink="/login" routerLinkActive="active-link">Sign in</a>
+      <a routerLink="/register" routerLinkActive="active-link">Register</a>
+    </ng-container>
+  </div>
+</nav>

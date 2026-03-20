@@ -1,0 +1,41 @@
+<div class="login-wrapper">
+  <form class="login-panel" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <h2>Create account</h2>
+    <p class="subtitle">Sign up to start managing your tasks.</p>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" formControlName="username" placeholder="Choose a username" />
+      <span class="error" *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
+        Username is required
+      </span>
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" formControlName="password" placeholder="Create a password" />
+      <span class="error" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+        Password must be at least 6 characters
+      </span>
+    </div>
+
+    <div class="field">
+      <label>Confirm Password</label>
+      <input type="password" formControlName="confirmPassword" placeholder="Re-enter your password" />
+      <span class="error" *ngIf="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
+        Please confirm your password
+      </span>
+    </div>
+
+    <div class="error-box" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <button class="submit-btn" type="submit" [disabled]="isLoading">
+      {{ isLoading ? 'Creating account...' : 'Create account' }}
+    </button>
+
+    <p class="account-hint">
+      Already have an account?
+      <a routerLink="/login">Sign in</a>
+    </p>
+  </form>
+</div>

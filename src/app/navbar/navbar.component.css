@@ -1,0 +1,61 @@
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(214, 224, 234, 0.9);
+  background: rgba(248, 251, 255, 0.86);
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ink-900);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-actions a,
+.nav-actions button {
+  padding: 0.52rem 0.9rem;
+  border-radius: 999px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  color: var(--ink-700);
+  background: transparent;
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+
+.nav-actions a:hover,
+.nav-actions button:hover {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--ink-900);
+}
+
+.nav-actions a.active-link {
+  color: var(--surface);
+  border-color: transparent;
+  background: linear-gradient(130deg, var(--brand), #1593c6);
+}
+
+.sign-out {
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .top-nav {
+    padding: 1rem 1.5rem;
+  }
+}

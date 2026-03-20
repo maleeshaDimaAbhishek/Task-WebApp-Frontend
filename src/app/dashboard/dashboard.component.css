@@ -1,0 +1,87 @@
+.dashboard {
+  display: grid;
+  gap: 1rem;
+}
+
+.hero {
+  background: linear-gradient(140deg, #fff, #f8fbff);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--brand);
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hero h2 {
+  margin: 0.2rem 0;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--ink-500);
+}
+
+.stat-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.stat-card,
+.guest-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 0.95rem;
+}
+
+.stat-card h3,
+.guest-card h3 {
+  margin: 0;
+}
+
+.value {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin: 0.4rem 0;
+}
+
+.hint,
+.guest-card p {
+  margin: 0;
+  color: var(--ink-500);
+}
+
+.guest-card a {
+  display: inline-block;
+  margin-top: 0.75rem;
+  color: var(--brand-strong);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (min-width: 760px) {
+  .dashboard {
+    gap: 1.2rem;
+  }
+
+  .hero {
+    padding: 1.3rem;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .stat-card,
+  .guest-card {
+    padding: 1.1rem;
+  }
+}
