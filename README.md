@@ -1,59 +1,58 @@
-# TaskUi
+# Task Management Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.3.
+## Overview
 
-## Development server
+This is the frontend application for the Task Management System built using Angular.
 
-To start a local development server, run:
+## Technologies Used
+
+* Angular
+* TypeScript
+* Bootstrap / CSS
+
+## How to Run Frontend
+
+### 1. Clone Repository
+
+git clone <your-frontend-repository-url>
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Run Project
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Frontend runs on:
 
-## Code scaffolding
+http://localhost:4200
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Backend Connection
 
-```bash
-ng generate component component-name
-```
+API Base URL:
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+http://localhost:8080/api
 
-```bash
-ng generate --help
-```
+## JWT Authentication
 
-## Building
+JWT token is stored in browser localStorage after login.
 
-To build the project run:
+## Default Credentials
 
-```bash
-ng build
-```
+Admin Login:
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+username: admin
+password: admin123
 
-## Running unit tests
+## Important Notes
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+* Backend must run before frontend
+* Angular interceptor attaches JWT token automatically
 
-```bash
-ng test
-```
+  <img width="1348" height="672" alt="image" src="https://github.com/user-attachments/assets/8bed14bd-d81b-4432-81b5-39c8e9215f1a" />
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
