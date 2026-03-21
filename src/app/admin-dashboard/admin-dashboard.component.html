@@ -38,13 +38,29 @@
   </div>
 
   <article class="panel" *ngIf="!isLoading && !errorMessage">
-    <h3>Recent Tasks</h3>
-    <p class="hint" *ngIf="recentTasks.length === 0">
-      No tasks available yet.
+    <h3>Tasks By Category</h3>
+
+    <div class="filter-row">
+      <label for="categoryFilter">Category</label>
+      <select
+        id="categoryFilter"
+        #categorySelect
+        [value]="selectedCategory"
+        (change)="onCategoryChange(categorySelect.value)"
+      >
+        <option value="ALL">All Categories</option>
+        <option *ngFor="let categoryName of categoryOptions" [value]="categoryName">
+          {{ categoryName }}
+        </option>
+      </select>
+    </div>
+
+    <p class="hint" *ngIf="filteredTasks.length === 0">
+      No tasks found for selected category.
     </p>
 
-    <div class="recent-list" *ngIf="recentTasks.length > 0">
-      <div class="recent-item" *ngFor="let task of recentTasks">
+    <div class="recent-list" *ngIf="filteredTasks.length > 0">
+      <div class="recent-item" *ngFor="let task of filteredTasks">
         <div>
           <h4>{{ task.title }}</h4>
           <p>

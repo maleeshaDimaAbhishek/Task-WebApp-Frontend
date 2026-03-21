@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
-import { firstValueFrom, timeout } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 import { getAuthErrorMessage } from '../../shared/auth-error.util';
 
 @Component({
@@ -24,7 +24,8 @@ export class LoginComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
@@ -39,26 +40,49 @@ export class LoginComponent {
     }
   }
 
-  async onSubmit() {
-    if (this.loginForm.invalid) return;
+  onSubmit(): void {
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      this.cdr.detectChanges();
+      return;
+    }
 
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
     this.setHardStopTimer();
+    this.cdr.detectChanges();
 
-    try {
-      await firstValueFrom(this.authService.login(this.loginForm.value).pipe(timeout(15000)));
-      const currentUser = await firstValueFrom(this.authService.getCurrentUser());
-      const isAdmin = (currentUser?.status || '').toUpperCase() === 'ADMIN';
-      this.errorMessage = '';
-      await this.router.navigate([isAdmin ? '/dashboard' : '/tasks']);
-    } catch (err) {
-      this.errorMessage = getAuthErrorMessage(err, 'login');
-    } finally {
-      this.isLoading = false;
-      this.clearHardStopTimer();
-    }
+    this.authService
+      .login(this.loginForm.value)
+      .pipe(
+        timeout(15000),
+        finalize(() => {
+          this.isLoading = false;
+          this.clearHardStopTimer();
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.authService.getCurrentUser().subscribe({
+            next: (currentUser) => {
+              const isAdmin = (currentUser?.status || '').toUpperCase() === 'ADMIN';
+              this.errorMessage = '';
+              this.cdr.detectChanges();
+              void this.router.navigate([isAdmin ? '/dashboard' : '/tasks']);
+            },
+            error: (err) => {
+              this.errorMessage = getAuthErrorMessage(err, 'login');
+              this.cdr.detectChanges();
+            },
+          });
+        },
+        error: (err) => {
+          this.errorMessage = getAuthErrorMessage(err, 'login');
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   private setHardStopTimer(): void {
@@ -67,6 +91,7 @@ export class LoginComponent {
       if (!this.isLoading) return;
       this.isLoading = false;
       this.errorMessage = 'Sign in is taking too long. Please try again.';
+      this.cdr.detectChanges();
     }, 20000);
   }
 
