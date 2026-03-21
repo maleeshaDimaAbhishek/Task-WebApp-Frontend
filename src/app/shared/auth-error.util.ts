@@ -25,9 +25,17 @@ export function getAuthErrorMessage(error: unknown, action: AuthAction): string 
   }
 
   const backendMessage = extractBackendMessage(err.error);
+  const normalizedBackendMessage = backendMessage?.toLowerCase() ?? '';
 
   if (action === 'login') {
     if (err.status === 401) return 'Invalid username or password.';
+    if (
+      err.status === 500 &&
+      (normalizedBackendMessage.includes('invalid username or password') ||
+        normalizedBackendMessage.includes('bad credentials'))
+    ) {
+      return 'Invalid username or password.';
+    }
     if (err.status === 500) return backendMessage || 'Server error during sign in. Please try again.';
     return backendMessage || 'Sign in failed. Please try again.';
   }

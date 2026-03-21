@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
-import { finalize, timeout } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { getAuthErrorMessage } from '../../shared/auth-error.util';
 
 @Component({
@@ -36,7 +36,7 @@ export class LoginComponent {
     }
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (this.loginForm.invalid) return;
 
     this.isLoading = true;
@@ -44,26 +44,16 @@ export class LoginComponent {
     this.successMessage = '';
     this.setHardStopTimer();
 
-    this.authService
-      .login(this.loginForm.value)
-      .pipe(
-        timeout(15000),
-        finalize(() => {
-          this.isLoading = false;
-          this.clearHardStopTimer();
-        })
-      )
-      .subscribe({
-        next: () => {
-          this.errorMessage = '';
-          this.isLoading = false;
-          this.router.navigate(['/dashboard']);
-        },
-        error: (err) => {
-          this.isLoading = false;
-          this.errorMessage = getAuthErrorMessage(err, 'login');
-        },
-      });
+    try {
+      await firstValueFrom(this.authService.login(this.loginForm.value).pipe(timeout(15000)));
+      this.errorMessage = '';
+      await this.router.navigate(['/dashboard']);
+    } catch (err) {
+      this.errorMessage = getAuthErrorMessage(err, 'login');
+    } finally {
+      this.isLoading = false;
+      this.clearHardStopTimer();
+    }
   }
 
   private setHardStopTimer(): void {
