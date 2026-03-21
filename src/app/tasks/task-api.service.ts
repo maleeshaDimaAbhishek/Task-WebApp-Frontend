@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 
 export interface TaskResponseDTO {
   id: number;
@@ -18,6 +18,7 @@ export interface CategoryDTO {
 }
 
 export interface TaskRequestDTO {
+  id?: number;
   title: string;
   description?: string;
   status: string;
@@ -42,7 +43,31 @@ export class TaskApiService {
   }
 
   updateTask(id: number, payload: TaskRequestDTO): Observable<TaskResponseDTO> {
-    return this.http.put<TaskResponseDTO>(`${this.API_URL}/api/task/${id}`, payload);
+    const url = `${this.API_URL}/api/task/${id}`;
+    const legacyPayload = this.toLegacyPayload(payload);
+
+    return this.http.put<TaskResponseDTO>(url, payload).pipe(
+      catchError((err) => {
+        // Some backends expose update with PATCH instead of PUT.
+        if (err?.status === 404 || err?.status === 405) {
+          return this.http.patch<TaskResponseDTO>(url, payload);
+        }
+
+        // Some backends only accept nested category object on update.
+        if (err?.status === 400 || err?.status === 415 || err?.status === 500) {
+          return this.http.put<TaskResponseDTO>(url, legacyPayload).pipe(
+            catchError((legacyErr) => {
+              if (legacyErr?.status === 404 || legacyErr?.status === 405) {
+                return this.http.patch<TaskResponseDTO>(url, legacyPayload);
+              }
+              return throwError(() => legacyErr);
+            })
+          );
+        }
+
+        return throwError(() => err);
+      })
+    );
   }
 
   deleteTask(id: number): Observable<void> {
@@ -51,5 +76,21 @@ export class TaskApiService {
 
   getAllCategories(): Observable<CategoryDTO[]> {
     return this.http.get<CategoryDTO[]>(`${this.API_URL}/api/category`);
+  }
+
+  private toLegacyPayload(payload: TaskRequestDTO): TaskRequestDTO {
+    const { categoryId, category, ...rest } = payload;
+    if (category?.id) {
+      return { ...rest, id: payload.id, status: payload.status, category };
+    }
+    if (!categoryId) {
+      return { ...rest, id: payload.id, status: payload.status };
+    }
+    return {
+      ...rest,
+      id: payload.id,
+      status: payload.status,
+      category: { id: categoryId },
+    };
   }
 }

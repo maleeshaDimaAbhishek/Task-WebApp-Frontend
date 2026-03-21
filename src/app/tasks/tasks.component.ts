@@ -7,7 +7,7 @@ import {
   TaskRequestDTO,
   TaskResponseDTO,
 } from './task-api.service';
-import { finalize, forkJoin } from 'rxjs';
+import { catchError, finalize, of } from 'rxjs';
 
 @Component({
   selector: 'app-tasks',
@@ -40,27 +40,27 @@ export class TasksComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadData();
+    this.loadTasks();
+    this.loadCategories();
   }
 
   loadData(): void {
+    this.loadTasks();
+    this.loadCategories();
+  }
+
+  loadTasks(): void {
     this.isLoading = true;
     this.errorMessage = '';
 
-    forkJoin({
-      tasks: this.taskApiService.getAllTasks(),
-      categories: this.taskApiService.getAllCategories(),
-    })
+    this.taskApiService
+      .getAllTasks()
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: ({ tasks, categories }) => {
+        next: (tasks) => {
           this.tasks = [...tasks].sort(
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
-          this.categories = categories;
-          if (!this.editingTaskId && categories.length > 0 && !this.taskForm.get('categoryId')?.value) {
-            this.taskForm.patchValue({ categoryId: String(categories[0].id) });
-          }
         },
         error: (err) => {
           this.errorMessage =
@@ -68,6 +68,18 @@ export class TasksComponent implements OnInit {
               ? 'Cannot reach backend service. Please check your server.'
               : 'Unable to load tasks.';
         },
+      });
+  }
+
+  loadCategories(): void {
+    this.taskApiService
+      .getAllCategories()
+      .pipe(catchError(() => of([] as CategoryDTO[])))
+      .subscribe((categories) => {
+        this.categories = categories;
+        if (!this.editingTaskId && categories.length > 0 && !this.taskForm.get('categoryId')?.value) {
+          this.taskForm.patchValue({ categoryId: String(categories[0].id) });
+        }
       });
   }
 
@@ -85,14 +97,17 @@ export class TasksComponent implements OnInit {
     const request$ =
       this.editingTaskId === null
         ? this.taskApiService.createTask(payload)
-        : this.taskApiService.updateTask(this.editingTaskId, payload);
+        : this.taskApiService.updateTask(this.editingTaskId, {
+            ...payload,
+            id: this.editingTaskId,
+          });
 
     request$
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
         next: () => {
           this.resetForm();
-          this.loadData();
+          this.loadTasks();
         },
         error: (err) => {
           const backendMessage =
@@ -164,9 +179,6 @@ export class TasksComponent implements OnInit {
       description: trimmedDescription || undefined,
       status: status || 'TODO',
       categoryId: Number.isNaN(parsedCategoryId) ? undefined : parsedCategoryId,
-      category: Number.isNaN(parsedCategoryId) || parsedCategoryId === undefined
-        ? undefined
-        : { id: parsedCategoryId },
     };
   }
 
