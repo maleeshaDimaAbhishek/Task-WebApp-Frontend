@@ -34,6 +34,9 @@ export class LoginComponent {
     if (this.route.snapshot.queryParamMap.get('registered') === '1') {
       this.successMessage = 'Account created successfully. Please sign in.';
     }
+    if (this.route.snapshot.queryParamMap.get('session') === 'expired') {
+      this.errorMessage = 'Your session expired or access was denied. Please sign in again.';
+    }
   }
 
   async onSubmit() {

@@ -17,6 +17,16 @@ export interface CategoryDTO {
   name: string;
 }
 
+export interface TaskRequestDTO {
+  title: string;
+  description?: string;
+  status: string;
+  categoryId?: number;
+  category?: {
+    id: number;
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class TaskApiService {
   private readonly API_URL = 'http://localhost:8080';
@@ -25,6 +35,18 @@ export class TaskApiService {
 
   getAllTasks(): Observable<TaskResponseDTO[]> {
     return this.http.get<TaskResponseDTO[]>(`${this.API_URL}/api/task`);
+  }
+
+  createTask(payload: TaskRequestDTO): Observable<TaskResponseDTO> {
+    return this.http.post<TaskResponseDTO>(`${this.API_URL}/api/task`, payload);
+  }
+
+  updateTask(id: number, payload: TaskRequestDTO): Observable<TaskResponseDTO> {
+    return this.http.put<TaskResponseDTO>(`${this.API_URL}/api/task/${id}`, payload);
+  }
+
+  deleteTask(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/api/task/${id}`);
   }
 
   getAllCategories(): Observable<CategoryDTO[]> {

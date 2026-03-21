@@ -4,26 +4,87 @@
       <p class="eyebrow">Task Center</p>
       <h2>My Tasks</h2>
     </div>
-    <button type="button">+ New Task</button>
+    <button type="button" (click)="onCancelEdit()">+ New Task</button>
   </header>
 
-  <div class="task-list">
-    <article class="task-row">
-      <h3>Prepare sprint summary</h3>
-      <p>Collect updates from contributors and draft sprint notes.</p>
-      <span class="pill high">High</span>
+  <article class="panel">
+    <h3>{{ editingTaskId ? 'Edit Task' : 'Create Task' }}</h3>
+    <form class="task-form" [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+      <div class="field">
+        <label>Title</label>
+        <input type="text" formControlName="title" placeholder="Task title" />
+        <span class="error" *ngIf="taskForm.get('title')?.invalid && taskForm.get('title')?.touched">
+          Title is required
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <textarea rows="3" formControlName="description" placeholder="Task description"></textarea>
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label>Status</label>
+          <select formControlName="status">
+            <option value="TODO">TODO</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="COMPLETED">COMPLETED</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Category</label>
+          <select formControlName="categoryId">
+            <option value="">Select category</option>
+            <option *ngFor="let category of categories" [value]="category.id">
+              {{ category.name }}
+            </option>
+          </select>
+          <span class="error" *ngIf="taskForm.get('categoryId')?.invalid && taskForm.get('categoryId')?.touched">
+            Category is required
+          </span>
+        </div>
+      </div>
+
+      <div class="error-box" *ngIf="submitErrorMessage">{{ submitErrorMessage }}</div>
+
+      <div class="form-actions">
+        <button class="primary" type="submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Saving...' : (editingTaskId ? 'Update Task' : 'Create Task') }}
+        </button>
+        <button *ngIf="editingTaskId" type="button" class="ghost" (click)="onCancelEdit()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </article>
+
+  <article class="state-card" *ngIf="isLoading">Loading tasks...</article>
+  <article class="state-card error" *ngIf="!isLoading && errorMessage">{{ errorMessage }}</article>
+
+  <div class="task-list" *ngIf="!isLoading && !errorMessage">
+    <article class="state-card" *ngIf="tasks.length === 0">
+      No tasks found. Create your first task above.
     </article>
 
-    <article class="task-row">
-      <h3>Review onboarding copy</h3>
-      <p>Polish welcome messages and first-time user flow text.</p>
-      <span class="pill medium">Medium</span>
-    </article>
-
-    <article class="task-row">
-      <h3>Archive resolved bugs</h3>
-      <p>Close stale tickets and update ownership labels.</p>
-      <span class="pill low">Low</span>
+    <article class="task-row" *ngFor="let task of tasks; trackBy: trackByTaskId">
+      <div class="task-main">
+        <h3>{{ task.title }}</h3>
+        <p>{{ task.description || 'No description provided.' }}</p>
+        <p class="meta">
+          {{ task.categoryName || 'Uncategorized' }} · {{ task.createdAt | date: 'mediumDate' }}
+        </p>
+      </div>
+      <div class="task-side">
+        <span class="pill" [ngClass]="getStatusClass(task.status)">
+          {{ task.status }}
+        </span>
+        <div class="actions">
+          <button type="button" class="ghost" (click)="onEdit(task)">Edit</button>
+          <button type="button" class="danger" (click)="onDelete(task)">Delete</button>
+        </div>
+      </div>
     </article>
   </div>
 </section>
