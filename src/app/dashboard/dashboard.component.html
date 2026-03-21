@@ -2,28 +2,62 @@
   <header class="hero">
     <p class="eyebrow">Workspace Overview</p>
     <h2>Dashboard</h2>
-    <p class="subtitle">Track work, prioritize tasks, and keep daily progress visible.</p>
+    <p class="subtitle">Track work, prioritize tasks, and keep your progress visible.</p>
   </header>
 
-  <div class="stat-grid" *ngIf="isLoggedIn$ | async; else guestView">
-    <article class="stat-card">
-      <h3>Due Today</h3>
-      <p class="value">4</p>
-      <p class="hint">Items requiring attention before end of day.</p>
+  <ng-container *ngIf="isLoggedIn$ | async; else guestView">
+    <article class="state-card" *ngIf="isLoading">Loading dashboard...</article>
+
+    <article class="state-card error" *ngIf="!isLoading && errorMessage">
+      {{ errorMessage }}
     </article>
 
-    <article class="stat-card">
-      <h3>In Progress</h3>
-      <p class="value">7</p>
-      <p class="hint">Tasks currently active across projects.</p>
-    </article>
+    <div class="stat-grid" *ngIf="!isLoading && !errorMessage">
+      <article class="stat-card">
+        <h3>Total Tasks</h3>
+        <p class="value">{{ totalTasks }}</p>
+        <p class="hint">All tasks assigned to your workspace.</p>
+      </article>
 
-    <article class="stat-card">
-      <h3>Completed</h3>
-      <p class="value">26</p>
-      <p class="hint">Finished this week and ready for review.</p>
+      <article class="stat-card">
+        <h3>In Progress</h3>
+        <p class="value">{{ inProgressTasks }}</p>
+        <p class="hint">Tasks currently being worked on.</p>
+      </article>
+
+      <article class="stat-card">
+        <h3>Completed</h3>
+        <p class="value">{{ completedTasks }}</p>
+        <p class="hint">Tasks marked as done or complete.</p>
+      </article>
+
+      <article class="stat-card">
+        <h3>Categories</h3>
+        <p class="value">{{ totalCategories }}</p>
+        <p class="hint">Active categories available in the system.</p>
+      </article>
+    </div>
+
+    <article class="panel" *ngIf="!isLoading && !errorMessage">
+      <h3>Recent Tasks</h3>
+      <p class="hint" *ngIf="recentTasks.length === 0">
+        No tasks yet. Create your first task from the Tasks page.
+      </p>
+
+      <div class="recent-list" *ngIf="recentTasks.length > 0">
+        <div class="recent-item" *ngFor="let task of recentTasks">
+          <div>
+            <h4>{{ task.title }}</h4>
+            <p>
+              {{ task.categoryName || 'Uncategorized' }} ·
+              {{ task.createdAt | date: 'mediumDate' }}
+            </p>
+          </div>
+          <span class="status-chip">{{ task.status }}</span>
+        </div>
+      </div>
     </article>
-  </div>
+  </ng-container>
 
   <ng-template #guestView>
     <article class="guest-card">

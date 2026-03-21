@@ -34,6 +34,20 @@
   gap: 0.85rem;
 }
 
+.state-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 0.95rem;
+  color: var(--ink-700);
+}
+
+.state-card.error {
+  border-color: #f3c2bd;
+  background: #fff1ef;
+  color: #a5302a;
+}
+
 .stat-card,
 .guest-card {
   background: var(--surface);
@@ -67,6 +81,54 @@
   text-decoration: none;
 }
 
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 0.95rem;
+}
+
+.panel h3 {
+  margin: 0 0 0.75rem;
+}
+
+.recent-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.recent-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: #fcfdff;
+}
+
+.recent-item h4 {
+  margin: 0 0 0.2rem;
+  font-size: 0.98rem;
+}
+
+.recent-item p {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: 0.86rem;
+}
+
+.status-chip {
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #edf5fc;
+  color: var(--brand-strong);
+  padding: 0.25rem 0.6rem;
+  white-space: nowrap;
+}
+
 @media (min-width: 760px) {
   .dashboard {
     gap: 1.2rem;
@@ -77,11 +139,12 @@
   }
 
   .stat-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .stat-card,
-  .guest-card {
+  .guest-card,
+  .panel {
     padding: 1.1rem;
   }
 }
