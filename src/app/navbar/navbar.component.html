@@ -4,7 +4,9 @@
   <div class="nav-actions">
     <ng-container *ngIf="isLoggedIn$ | async">
       <a routerLink="/tasks" routerLinkActive="active-link">My Tasks</a>
-      <a routerLink="/dashboard" routerLinkActive="active-link">Dashboard</a>
+      <a *ngIf="isAdmin$ | async" routerLink="/dashboard" routerLinkActive="active-link">
+        Dashboard
+      </a>
       <button class="sign-out" (click)="logout()">Sign out</button>
     </ng-container>
 

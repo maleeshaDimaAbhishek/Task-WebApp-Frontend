@@ -13,9 +13,18 @@ import { AuthService } from '../auth/auth.service';
 })
 export class NavbarComponent {
   isLoggedIn$: Observable<boolean>;
+  isAdmin$: Observable<boolean>;
 
   constructor(private authService: AuthService) {
     this.isLoggedIn$ = this.authService.isLoggedIn();
+    this.isAdmin$ = this.authService.isAdmin();
+    if (this.authService.isLoggedInSnapshot()) {
+      this.authService.getCurrentUser().subscribe({
+        error: () => {
+          // Keep navbar stable if current user lookup fails.
+        },
+      });
+    }
   }
 
   logout() {

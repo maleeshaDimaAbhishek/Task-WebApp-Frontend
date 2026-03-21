@@ -49,8 +49,10 @@ export class LoginComponent {
 
     try {
       await firstValueFrom(this.authService.login(this.loginForm.value).pipe(timeout(15000)));
+      const currentUser = await firstValueFrom(this.authService.getCurrentUser());
+      const isAdmin = (currentUser?.status || '').toUpperCase() === 'ADMIN';
       this.errorMessage = '';
-      await this.router.navigate(['/dashboard']);
+      await this.router.navigate([isAdmin ? '/dashboard' : '/tasks']);
     } catch (err) {
       this.errorMessage = getAuthErrorMessage(err, 'login');
     } finally {
