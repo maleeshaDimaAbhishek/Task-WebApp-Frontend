@@ -12,10 +12,31 @@
     </div>
 
     <div class="field">
+      <label>Full Name (Optional)</label>
+      <input type="text" formControlName="name" placeholder="Enter your name" />
+    </div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" formControlName="email" placeholder="Enter your email" />
+      <span class="error" *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+        Valid email is required
+      </span>
+    </div>
+
+    <div class="field">
+      <label>Birth Date</label>
+      <input type="date" formControlName="birthDate" />
+      <span class="error" *ngIf="registerForm.get('birthDate')?.invalid && registerForm.get('birthDate')?.touched">
+        Birth date is required
+      </span>
+    </div>
+
+    <div class="field">
       <label>Password</label>
       <input type="password" formControlName="password" placeholder="Create a password" />
       <span class="error" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
-        Password must be at least 6 characters
+        Password must be at least 8 characters
       </span>
     </div>
 

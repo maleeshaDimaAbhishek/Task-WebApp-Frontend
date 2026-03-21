@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 
 export interface LoginRequest {
   username: string;
@@ -10,11 +10,23 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   username: string;
+  name?: string;
+  birthDate: string;
+  status?: string;
+  email: string;
   password: string;
 }
 
 export interface AuthResponse {
   token?: string;
+}
+
+export interface RegisterResponse {
+  id: number;
+  userName: string;
+  name: string;
+  email: string;
+  status: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -28,25 +40,22 @@ export class AuthService {
   constructor(private http: HttpClient, private router: Router) {}
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/ai/auth/login`, credentials).pipe(
-      tap((res) => {
-        if (res.token) {
-          localStorage.setItem(this.TOKEN_KEY, res.token);
-          this.loggedIn$.next(true);
+    return this.http.post<AuthResponse>(`${this.API_URL}/api/auth/login`, credentials).pipe(
+      map((res) => {
+        if (!res?.token) {
+          throw new Error('JWT token not found in login response.');
         }
+        return res;
+      }),
+      tap((res) => {
+        localStorage.setItem(this.TOKEN_KEY, res.token as string);
+        this.loggedIn$.next(true);
       })
     );
   }
 
-  register(payload: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/ai/auth/register`, payload).pipe(
-      tap((res) => {
-        if (res.token) {
-          localStorage.setItem(this.TOKEN_KEY, res.token);
-          this.loggedIn$.next(true);
-        }
-      })
-    );
+  register(payload: RegisterRequest): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${this.API_URL}/api/auth/register`, payload);
   }
 
   logout(): void {

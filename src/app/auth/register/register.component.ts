@@ -2,7 +2,9 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { AuthService } from '../auth.service';
+import { AuthService, RegisterRequest } from '../auth.service';
+import { finalize, timeout } from 'rxjs';
+import { getAuthErrorMessage } from '../../shared/auth-error.util';
 
 @Component({
   selector: 'app-register',
@@ -23,37 +25,69 @@ export class RegisterComponent {
   ) {
     this.registerForm = this.fb.group({
       username: ['', Validators.required],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      name: [''],
+      birthDate: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
     });
   }
 
   onSubmit(): void {
+    this.isLoading = false;
+    this.errorMessage = '';
+
     if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      const invalidFields = this.getInvalidFieldNames();
+      this.errorMessage =
+        invalidFields.length > 0
+          ? `Please correct: ${invalidFields.join(', ')}.`
+          : 'Please fill all required fields correctly.';
       return;
     }
 
-    const { username, password, confirmPassword } = this.registerForm.value;
+    const { username, name, birthDate, email, password, confirmPassword } =
+      this.registerForm.value;
     if (password !== confirmPassword) {
       this.errorMessage = 'Passwords do not match.';
       return;
     }
 
-    this.errorMessage = '';
+    const payload: RegisterRequest = {
+      username,
+      birthDate,
+      email,
+      password,
+      name: name || undefined,
+      status: 'USER',
+    };
+
     this.isLoading = true;
 
-    this.authService.register({ username, password }).subscribe({
-      next: () => {
-        if (this.authService.isLoggedInSnapshot()) {
-          this.router.navigate(['/dashboard']);
-          return;
-        }
-        this.router.navigate(['/login']);
-      },
-      error: () => {
-        this.errorMessage = 'Unable to register. Please try again.';
-        this.isLoading = false;
-      },
-    });
+    this.authService
+      .register(payload)
+      .pipe(
+        timeout(15000),
+        finalize(() => (this.isLoading = false))
+      )
+      .subscribe({
+        next: () => this.router.navigate(['/login'], { queryParams: { registered: '1' } }),
+        error: (err) => (this.errorMessage = getAuthErrorMessage(err, 'register')),
+      });
+  }
+
+  private getInvalidFieldNames(): string[] {
+    const labelMap: Record<string, string> = {
+      username: 'Username',
+      birthDate: 'Birth Date',
+      email: 'Email',
+      password: 'Password',
+      confirmPassword: 'Confirm Password',
+    };
+
+    return Object.keys(this.registerForm.controls)
+      .filter((key) => this.registerForm.get(key)?.invalid)
+      .map((key) => labelMap[key] ?? key);
   }
 }

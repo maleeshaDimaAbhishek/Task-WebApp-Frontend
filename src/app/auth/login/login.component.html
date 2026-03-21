@@ -19,6 +19,7 @@
       </span>
     </div>
 
+    <div class="success-box" *ngIf="successMessage">{{ successMessage }}</div>
     <div class="error-box" *ngIf="errorMessage">{{ errorMessage }}</div>
 
     <button class="submit-btn" type="submit" [disabled]="isLoading">

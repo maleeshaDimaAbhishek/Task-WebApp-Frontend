@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
+import { finalize, timeout } from 'rxjs';
+import { getAuthErrorMessage } from '../../shared/auth-error.util';
 
 @Component({
   selector: 'app-login',
@@ -14,17 +16,24 @@ import { AuthService } from '../auth.service';
 export class LoginComponent {
   loginForm: FormGroup;
   errorMessage = '';
+  successMessage = '';
   isLoading = false;
+  private hardStopTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required],
     });
+
+    if (this.route.snapshot.queryParamMap.get('registered') === '1') {
+      this.successMessage = 'Account created successfully. Please sign in.';
+    }
   }
 
   onSubmit() {
@@ -32,13 +41,43 @@ export class LoginComponent {
 
     this.isLoading = true;
     this.errorMessage = '';
+    this.successMessage = '';
+    this.setHardStopTimer();
 
-    this.authService.login(this.loginForm.value).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
-      error: () => {
-        this.errorMessage = 'Invalid username or password.';
-        this.isLoading = false;
-      }
-    });
+    this.authService
+      .login(this.loginForm.value)
+      .pipe(
+        timeout(15000),
+        finalize(() => {
+          this.isLoading = false;
+          this.clearHardStopTimer();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.errorMessage = '';
+          this.isLoading = false;
+          this.router.navigate(['/dashboard']);
+        },
+        error: (err) => {
+          this.isLoading = false;
+          this.errorMessage = getAuthErrorMessage(err, 'login');
+        },
+      });
+  }
+
+  private setHardStopTimer(): void {
+    this.clearHardStopTimer();
+    this.hardStopTimer = setTimeout(() => {
+      if (!this.isLoading) return;
+      this.isLoading = false;
+      this.errorMessage = 'Sign in is taking too long. Please try again.';
+    }, 20000);
+  }
+
+  private clearHardStopTimer(): void {
+    if (!this.hardStopTimer) return;
+    clearTimeout(this.hardStopTimer);
+    this.hardStopTimer = null;
   }
 }
