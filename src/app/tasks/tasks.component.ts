@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
@@ -7,7 +7,8 @@ import {
   TaskRequestDTO,
   TaskResponseDTO,
 } from './task-api.service';
-import { catchError, finalize, of, retry, Subscription, timer } from 'rxjs';
+import { catchError, finalize, of, retry } from 'rxjs';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-tasks',
@@ -16,7 +17,7 @@ import { catchError, finalize, of, retry, Subscription, timer } from 'rxjs';
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
 })
-export class TasksComponent implements OnInit, OnDestroy {
+export class TasksComponent implements OnInit {
   isLoading = true;
   isSubmitting = false;
   errorMessage = '';
@@ -24,7 +25,6 @@ export class TasksComponent implements OnInit, OnDestroy {
   tasks: TaskResponseDTO[] = [];
   categories: CategoryDTO[] = [];
   editingTaskId: number | null = null;
-  private backgroundRetrySub?: Subscription;
 
   taskForm: FormGroup;
 
@@ -46,17 +46,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.loadCategories();
   }
 
-  ngOnDestroy(): void {
-    this.backgroundRetrySub?.unsubscribe();
-  }
-
   loadData(): void {
     this.loadTasks();
     this.loadCategories();
   }
 
   loadTasks(): void {
-    this.backgroundRetrySub?.unsubscribe();
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -87,8 +82,6 @@ export class TasksComponent implements OnInit, OnDestroy {
                 ? 'Cannot reach backend service. Please check your server.'
                 : 'Unable to load tasks.';
           }
-          // Auto-retry once in background so users do not need to navigate away/back.
-          this.backgroundRetrySub = timer(2000).subscribe(() => this.loadTasks());
         },
       });
   }
@@ -110,11 +103,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (this.taskForm.invalid) {
       this.taskForm.markAllAsTouched();
       this.submitErrorMessage = 'Please fill required fields.';
+      this.showAlert('Validation', 'Please fill required fields.', 'warning');
       return;
     }
 
     const payload = this.toRequestPayload();
     this.isSubmitting = true;
+    const isEditAction = this.editingTaskId !== null;
 
     const request$ =
       this.editingTaskId === null
@@ -128,8 +123,13 @@ export class TasksComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
         next: () => {
+          this.showAlert(
+            isEditAction ? 'Updated' : 'Created',
+            isEditAction ? 'Task updated successfully.' : 'Task created successfully.',
+            'success'
+          );
           this.resetForm();
-          this.loadTasks();
+          this.loadData();
         },
         error: (err) => {
           const backendMessage =
@@ -142,6 +142,7 @@ export class TasksComponent implements OnInit, OnDestroy {
               : err?.status === 0
                 ? 'Cannot reach backend service. Please check your server.'
                 : backendMessage || 'Unable to save task.';
+          this.showAlert('Save Failed', this.submitErrorMessage, 'error');
         },
       });
   }
@@ -158,21 +159,31 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   onDelete(task: TaskResponseDTO): void {
-    if (!confirm(`Delete task "${task.title}"?`)) {
-      return;
-    }
+    Swal.fire({
+      title: 'Delete Task?',
+      text: `Delete task "${task.title}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#d33',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
 
-    this.submitErrorMessage = '';
-    this.taskApiService.deleteTask(task.id).subscribe({
-      next: () => {
-        if (this.editingTaskId === task.id) {
-          this.resetForm();
-        }
-        this.loadData();
-      },
-      error: () => {
-        this.submitErrorMessage = 'Unable to delete task.';
-      },
+      this.submitErrorMessage = '';
+      this.taskApiService.deleteTask(task.id).subscribe({
+        next: () => {
+          this.showAlert('Deleted', 'Task deleted successfully.', 'success');
+          if (this.editingTaskId === task.id) {
+            this.resetForm();
+          }
+          this.loadData();
+        },
+        error: () => {
+          this.submitErrorMessage = 'Unable to delete task.';
+          this.showAlert('Delete Failed', 'Unable to delete task. Please try again.', 'error');
+        },
+      });
     });
   }
 
@@ -236,5 +247,14 @@ export class TasksComponent implements OnInit, OnDestroy {
     );
     this.isLoading = false;
     this.errorMessage = '';
+  }
+
+  private showAlert(title: string, text: string, icon: 'success' | 'error' | 'warning'): void {
+    void Swal.fire({
+      title,
+      text,
+      icon,
+      confirmButtonText: 'OK',
+    });
   }
 }
