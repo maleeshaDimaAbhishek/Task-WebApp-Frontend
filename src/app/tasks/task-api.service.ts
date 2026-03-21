@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, Observable, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, Observable, tap, throwError } from 'rxjs';
 
 export interface TaskResponseDTO {
   id: number;
@@ -31,11 +31,18 @@ export interface TaskRequestDTO {
 @Injectable({ providedIn: 'root' })
 export class TaskApiService {
   private readonly API_URL = 'http://localhost:8080';
+  private readonly tasksCache$ = new BehaviorSubject<TaskResponseDTO[] | null>(null);
 
   constructor(private http: HttpClient) {}
 
   getAllTasks(): Observable<TaskResponseDTO[]> {
-    return this.http.get<TaskResponseDTO[]>(`${this.API_URL}/api/task`);
+    return this.http.get<TaskResponseDTO[]>(`${this.API_URL}/api/task`).pipe(
+      tap((tasks) => this.tasksCache$.next(tasks))
+    );
+  }
+
+  getCachedTasks(): TaskResponseDTO[] {
+    return this.tasksCache$.getValue() ?? [];
   }
 
   createTask(payload: TaskRequestDTO): Observable<TaskResponseDTO> {

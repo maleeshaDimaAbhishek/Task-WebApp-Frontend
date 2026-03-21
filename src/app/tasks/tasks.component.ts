@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
@@ -7,7 +7,7 @@ import {
   TaskRequestDTO,
   TaskResponseDTO,
 } from './task-api.service';
-import { catchError, finalize, of } from 'rxjs';
+import { catchError, finalize, of, retry, Subscription, timer } from 'rxjs';
 
 @Component({
   selector: 'app-tasks',
@@ -16,7 +16,7 @@ import { catchError, finalize, of } from 'rxjs';
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
 })
-export class TasksComponent implements OnInit {
+export class TasksComponent implements OnInit, OnDestroy {
   isLoading = true;
   isSubmitting = false;
   errorMessage = '';
@@ -24,6 +24,7 @@ export class TasksComponent implements OnInit {
   tasks: TaskResponseDTO[] = [];
   categories: CategoryDTO[] = [];
   editingTaskId: number | null = null;
+  private backgroundRetrySub?: Subscription;
 
   taskForm: FormGroup;
 
@@ -40,8 +41,13 @@ export class TasksComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.hydrateFromCache();
     this.loadTasks();
     this.loadCategories();
+  }
+
+  ngOnDestroy(): void {
+    this.backgroundRetrySub?.unsubscribe();
   }
 
   loadData(): void {
@@ -50,23 +56,39 @@ export class TasksComponent implements OnInit {
   }
 
   loadTasks(): void {
+    this.backgroundRetrySub?.unsubscribe();
     this.isLoading = true;
     this.errorMessage = '';
 
     this.taskApiService
       .getAllTasks()
-      .pipe(finalize(() => (this.isLoading = false)))
+      .pipe(
+        // First navigation can fail transiently while backend/session stabilizes.
+        retry({ count: 6, delay: 1000 }),
+        finalize(() => (this.isLoading = false))
+      )
       .subscribe({
         next: (tasks) => {
+          this.errorMessage = '';
           this.tasks = [...tasks].sort(
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
         },
         error: (err) => {
-          this.errorMessage =
-            err?.status === 0
-              ? 'Cannot reach backend service. Please check your server.'
-              : 'Unable to load tasks.';
+          const cachedTasks = this.taskApiService.getCachedTasks();
+          if (cachedTasks.length > 0) {
+            this.errorMessage = '';
+            this.tasks = [...cachedTasks].sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          } else {
+            this.errorMessage =
+              err?.status === 0
+                ? 'Cannot reach backend service. Please check your server.'
+                : 'Unable to load tasks.';
+          }
+          // Auto-retry once in background so users do not need to navigate away/back.
+          this.backgroundRetrySub = timer(2000).subscribe(() => this.loadTasks());
         },
       });
   }
@@ -158,12 +180,16 @@ export class TasksComponent implements OnInit {
     this.resetForm();
   }
 
+  onRetryLoad(): void {
+    this.loadData();
+  }
+
   trackByTaskId(_: number, task: TaskResponseDTO): number {
     return task.id;
   }
 
   getStatusClass(status: string): string {
-    const normalized = status.toLowerCase();
+    const normalized = (status || '').toLowerCase();
     if (normalized.includes('done') || normalized.includes('complete')) return 'done';
     if (normalized.includes('progress') || normalized.includes('doing')) return 'progress';
     return 'todo';
@@ -198,5 +224,17 @@ export class TasksComponent implements OnInit {
       categoryId: this.categories.length > 0 ? String(this.categories[0].id) : '',
     });
     this.submitErrorMessage = '';
+  }
+
+  private hydrateFromCache(): void {
+    const cachedTasks = this.taskApiService.getCachedTasks();
+    if (cachedTasks.length === 0) {
+      return;
+    }
+    this.tasks = [...cachedTasks].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    this.isLoading = false;
+    this.errorMessage = '';
   }
 }

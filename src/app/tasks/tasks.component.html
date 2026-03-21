@@ -4,7 +4,6 @@
       <p class="eyebrow">Task Center</p>
       <h2>My Tasks</h2>
     </div>
-    <button type="button" (click)="onCancelEdit()">+ New Task</button>
   </header>
 
   <article class="panel">
@@ -61,7 +60,10 @@
   </article>
 
   <article class="state-card" *ngIf="isLoading">Loading tasks...</article>
-  <article class="state-card error" *ngIf="!isLoading && errorMessage">{{ errorMessage }}</article>
+  <article class="state-card error" *ngIf="!isLoading && errorMessage">
+    <p>{{ errorMessage }}</p>
+    <button type="button" class="ghost" (click)="onRetryLoad()">Retry</button>
+  </article>
 
   <div class="task-list" *ngIf="!isLoading && !errorMessage">
     <article class="state-card" *ngIf="tasks.length === 0">
