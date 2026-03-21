@@ -40,7 +40,7 @@ export class AdminDashboardComponent implements OnInit {
     this.categoryErrorMessage = '';
 
     this.taskApiService
-      .getAllTasks()
+      .getAllTasksForAdmin()
       .pipe(
         timeout(10000),
         catchError((err) => {

@@ -41,6 +41,10 @@ export class TaskApiService {
     );
   }
 
+  getAllTasksForAdmin(): Observable<TaskResponseDTO[]> {
+    return this.http.get<TaskResponseDTO[]>(`${this.API_URL}/api/task/admin/all`);
+  }
+
   getCachedTasks(): TaskResponseDTO[] {
     return this.tasksCache$.getValue() ?? [];
   }

@@ -64,7 +64,7 @@
         <div>
           <h4>{{ task.title }}</h4>
           <p>
-            {{ task.categoryName || 'Uncategorized' }} ·
+            {{ task.userName || 'Unknown User' }} · {{ task.categoryName || 'Uncategorized' }} ·
             {{ task.createdAt | date: 'mediumDate' }}
           </p>
         </div>

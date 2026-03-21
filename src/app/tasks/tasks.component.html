@@ -65,6 +65,26 @@
     <button type="button" class="ghost" (click)="onRetryLoad()">Retry</button>
   </article>
 
+  <div class="stat-grid" *ngIf="!isLoading && !errorMessage">
+    <article class="stat-card">
+      <h3>Total Tasks</h3>
+      <p class="value">{{ totalTasks }}</p>
+      <p class="hint">All your tasks.</p>
+    </article>
+
+    <article class="stat-card">
+      <h3>In Progress</h3>
+      <p class="value">{{ inProgressTasks }}</p>
+      <p class="hint">Tasks currently in progress.</p>
+    </article>
+
+    <article class="stat-card">
+      <h3>Completed</h3>
+      <p class="value">{{ completedTasks }}</p>
+      <p class="hint">Tasks marked complete.</p>
+    </article>
+  </div>
+
   <div class="task-list" *ngIf="!isLoading && !errorMessage">
     <article class="state-card" *ngIf="tasks.length === 0">
       No tasks found. Create your first task above.

@@ -199,6 +199,18 @@ export class TasksComponent implements OnInit {
     return task.id;
   }
 
+  get totalTasks(): number {
+    return this.tasks.length;
+  }
+
+  get inProgressTasks(): number {
+    return this.tasks.filter((task) => this.isInProgress(task.status)).length;
+  }
+
+  get completedTasks(): number {
+    return this.tasks.filter((task) => this.isCompleted(task.status)).length;
+  }
+
   getStatusClass(status: string): string {
     const normalized = (status || '').toLowerCase();
     if (normalized.includes('done') || normalized.includes('complete')) return 'done';
@@ -247,6 +259,16 @@ export class TasksComponent implements OnInit {
     );
     this.isLoading = false;
     this.errorMessage = '';
+  }
+
+  private isCompleted(status: string): boolean {
+    const normalized = (status || '').toLowerCase();
+    return normalized.includes('done') || normalized.includes('complete');
+  }
+
+  private isInProgress(status: string): boolean {
+    const normalized = (status || '').toLowerCase();
+    return normalized.includes('progress') || normalized.includes('doing');
   }
 
   private showAlert(title: string, text: string, icon: 'success' | 'error' | 'warning'): void {
